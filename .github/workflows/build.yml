@@ -21,14 +21,12 @@ jobs:
       - name: Установка зависимостей
         run: |
           python -m pip install --upgrade pip
-          pip install gradio playwright openpyxl nuitka zstandard
-          pip install gradio playwright openpyxl nuitka zstandard aiofiles
+          pip install gradio playwright openpyxl nuitka zstandard aiofiles websockets safehttpx pydantic
 
       - name: Установка Playwright Chromium
         run: playwright install chromium
 
       - name: Сборка EXE через Nuitka
-        shell: pwsh
         run: python -m nuitka --mode=standalone --windows-console-mode=disable --include-package=gradio --include-package=gradio_client --include-package=uvicorn --include-package=fastapi --include-package=starlette --include-package=anyio --include-package=httpx --include-package=openpyxl --include-package=playwright --include-package=numpy --include-package=safehttpx --include-package=pydantic --include-package=websockets --assume-yes-for-downloads --output-filename=HH_Parser.exe hh_gradio.py
 
       - name: Копирование Playwright-браузеров
@@ -52,8 +50,8 @@ jobs:
           Copy-Item -Recurse playwright_browsers HH_Parser_dist\
 
       - name: Архивация в ZIP
-        run: |
-          Compress-Archive -Path HH_Parser_dist\* -DestinationPath HH_Parser_Windows.zip
+        shell: pwsh
+        run: Compress-Archive -Path HH_Parser_dist\* -DestinationPath HH_Parser_Windows.zip
 
       - name: Загрузка артефакта
         uses: actions/upload-artifact@v4
