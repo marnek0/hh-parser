@@ -27,7 +27,20 @@ jobs:
         run: playwright install chromium
 
       - name: Сборка EXE через PyInstaller
-        run: pyinstaller hh_gradio.spec
+        run: |
+          pyinstaller hh_gradio.py `
+            --name HH_Parser `
+            --noconsole `
+            --collect-all gradio `
+            --collect-all gradio_client `
+            --hidden-import numpy `
+            --hidden-import uvicorn `
+            --hidden-import fastapi `
+            --hidden-import starlette `
+            --hidden-import anyio `
+            --hidden-import playwright `
+            --hidden-import openpyxl `
+            --noconfirm
 
       - name: Копирование Playwright-браузеров в dist
         shell: pwsh
