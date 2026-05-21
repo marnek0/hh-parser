@@ -22,13 +22,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install gradio playwright openpyxl nuitka zstandard
+          pip install gradio playwright openpyxl nuitka zstandard aiofiles
 
       - name: Установка Playwright Chromium
         run: playwright install chromium
 
       - name: Сборка EXE через Nuitka
         shell: pwsh
-        run: python -m nuitka --mode=standalone --windows-console-mode=disable --include-package=gradio --include-package=gradio_client --include-package=uvicorn --include-package=fastapi --include-package=starlette --include-package=anyio --include-package=httpx --include-package=openpyxl --include-package=playwright --include-package=numpy --include-package=safehttpx --include-package=aiofiles --include-package=pydantic --include-package=websockets --assume-yes-for-downloads --output-filename=HH_Parser.exe hh_gradio.py
+        run: python -m nuitka --mode=standalone --windows-console-mode=disable --include-package=gradio --include-package=gradio_client --include-package=uvicorn --include-package=fastapi --include-package=starlette --include-package=anyio --include-package=httpx --include-package=openpyxl --include-package=playwright --include-package=numpy --include-package=safehttpx --include-package=pydantic --include-package=websockets --assume-yes-for-downloads --output-filename=HH_Parser.exe hh_gradio.py
 
       - name: Копирование Playwright-браузеров
         shell: pwsh
