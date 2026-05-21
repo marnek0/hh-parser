@@ -27,27 +27,8 @@ jobs:
         run: playwright install chromium
 
       - name: Сборка EXE через Nuitka
-        run: |
-          python -m nuitka `
-            --onefile `
-            --windows-console-mode=disable `
-            --include-package=gradio `
-            --include-package=gradio_client `
-            --include-package=uvicorn `
-            --include-package=fastapi `
-            --include-package=starlette `
-            --include-package=anyio `
-            --include-package=httpx `
-            --include-package=openpyxl `
-            --include-package=playwright `
-            --include-package=numpy `
-            --include-package=safehttpx `
-            --include-package=aiofiles `
-            --include-package=pydantic `
-            --include-package=websockets `
-            --include-data-dir=. =. `
-            --output-filename=HH_Parser.exe `
-            hh_gradio.py
+        shell: pwsh
+        run: python -m nuitka --mode=standalone --windows-console-mode=disable --include-package=gradio --include-package=gradio_client --include-package=uvicorn --include-package=fastapi --include-package=starlette --include-package=anyio --include-package=httpx --include-package=openpyxl --include-package=playwright --include-package=numpy --include-package=safehttpx --include-package=aiofiles --include-package=pydantic --include-package=websockets --assume-yes-for-downloads --output-filename=HH_Parser.exe hh_gradio.py
 
       - name: Копирование Playwright-браузеров
         shell: pwsh
@@ -66,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path HH_Parser_dist
-          Copy-Item HH_Parser.exe HH_Parser_dist\
+          Copy-Item -Recurse hh_gradio.dist\* HH_Parser_dist\
           Copy-Item -Recurse playwright_browsers HH_Parser_dist\
 
       - name: Архивация в ZIP
