@@ -1,0 +1,66 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # позволяет запускать вручную из интерфейса GitHub
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+
+      - name: Установка Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Установка зависимостей
+        run: |
+          python -m pip install --upgrade pip
+          pip install gradio playwright openpyxl pyinstaller
+
+      - name: Установка Playwright Chromium
+        run: playwright install chromium
+
+      - name: Сборка EXE через PyInstaller
+        run: pyinstaller hh_gradio.spec
+
+      - name: Копирование Playwright-браузеров в dist
+        shell: pwsh
+        run: |
+          $browsers = "$env:USERPROFILE\AppData\Local\ms-playwright"
+          $dest = "dist\HH_Parser\playwright_browsers"
+          if (Test-Path $browsers) {
+            Copy-Item -Recurse -Force $browsers $dest
+            Write-Host "Браузеры скопированы в $dest"
+          } else {
+            Write-Host "Папка браузеров не найдена: $browsers"
+            exit 1
+          }
+
+      - name: Создание install_browsers.bat
+        shell: pwsh
+        run: |
+          $bat = @"
+          @echo off
+          echo Установка браузера Chromium для HH Parser...
+          set PLAYWRIGHT_BROWSERS_PATH=%~dp0playwright_browsers
+          echo Готово! Теперь запускайте HH_Parser.exe
+          pause
+          "@
+          $bat | Out-File -FilePath "dist\HH_Parser\install_browsers.bat" -Encoding ASCII
+
+      - name: Архивация dist в ZIP
+        run: |
+          Compress-Archive -Path dist\HH_Parser\* -DestinationPath HH_Parser_Windows.zip
+
+      - name: Загрузка артефакта
+        uses: actions/upload-artifact@v4
+        with:
+          name: HH_Parser_Windows
+          path: HH_Parser_Windows.zip
+          retention-days: 30
