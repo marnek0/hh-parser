@@ -3,7 +3,7 @@ name: Build Windows EXE
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # позволяет запускать вручную из интерфейса GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,55 +21,57 @@ jobs:
       - name: Установка зависимостей
         run: |
           python -m pip install --upgrade pip
-          pip install gradio playwright openpyxl pyinstaller numpy
+          pip install gradio playwright openpyxl nuitka zstandard
 
       - name: Установка Playwright Chromium
         run: playwright install chromium
 
-      - name: Сборка EXE через PyInstaller
+      - name: Сборка EXE через Nuitka
         run: |
-          pyinstaller hh_gradio.py `
-            --name HH_Parser `
-            --noconsole `
-            --collect-all gradio `
-            --collect-all gradio_client `
-            --hidden-import numpy `
-            --hidden-import uvicorn `
-            --hidden-import fastapi `
-            --hidden-import starlette `
-            --hidden-import anyio `
-            --hidden-import playwright `
-            --hidden-import openpyxl `
-            --noconfirm
+          python -m nuitka `
+            --onefile `
+            --windows-console-mode=disable `
+            --include-package=gradio `
+            --include-package=gradio_client `
+            --include-package=uvicorn `
+            --include-package=fastapi `
+            --include-package=starlette `
+            --include-package=anyio `
+            --include-package=httpx `
+            --include-package=openpyxl `
+            --include-package=playwright `
+            --include-package=numpy `
+            --include-package=safehttpx `
+            --include-package=aiofiles `
+            --include-package=pydantic `
+            --include-package=websockets `
+            --include-data-dir=. =. `
+            --output-filename=HH_Parser.exe `
+            hh_gradio.py
 
-      - name: Копирование Playwright-браузеров в dist
+      - name: Копирование Playwright-браузеров
         shell: pwsh
         run: |
           $browsers = "$env:USERPROFILE\AppData\Local\ms-playwright"
-          $dest = "dist\HH_Parser\playwright_browsers"
+          $dest = "playwright_browsers"
           if (Test-Path $browsers) {
             Copy-Item -Recurse -Force $browsers $dest
-            Write-Host "Браузеры скопированы в $dest"
+            Write-Host "Браузеры скопированы"
           } else {
-            Write-Host "Папка браузеров не найдена: $browsers"
+            Write-Host "Папка браузеров не найдена"
             exit 1
           }
 
-      - name: Создание install_browsers.bat
+      - name: Создание папки для архива
         shell: pwsh
         run: |
-          $bat = @"
-          @echo off
-          echo Установка браузера Chromium для HH Parser...
-          set PLAYWRIGHT_BROWSERS_PATH=%~dp0playwright_browsers
-          echo Готово! Теперь запускайте HH_Parser.exe
-          pause
-          "@
-          $bat | Out-File -FilePath "dist\HH_Parser\install_browsers.bat" -Encoding ASCII
+          New-Item -ItemType Directory -Force -Path HH_Parser_dist
+          Copy-Item HH_Parser.exe HH_Parser_dist\
+          Copy-Item -Recurse playwright_browsers HH_Parser_dist\
 
-      - name: Архивация dist в ZIP
+      - name: Архивация в ZIP
         run: |
-          Compress-Archive -Path dist\HH_Parser\* -DestinationPath HH_Parser_Windows.zip
+          Compress-Archive -Path HH_Parser_dist\* -DestinationPath HH_Parser_Windows.zip
 
       - name: Загрузка артефакта
         uses: actions/upload-artifact@v4
